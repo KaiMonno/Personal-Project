@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import uploadImage from './ImageService';
 
 function QuestionInput() {
   const [inputValue, setInputValue] = useState('');
@@ -25,10 +26,33 @@ function QuestionInput() {
 
   const handleConfirm = () => {
     setIsConfirmed(true);
-    setCurrentStep(currentStep + 1); // move to the next step
+  
+    // fetching image
+    fetch(`${process.env.PUBLIC_URL}/images/${selectedImage}`)
+      .then(response => response.blob())
+      .then(blob => {
+        // using blob to create new file
+        const imageFile = new File([blob], selectedImage, { type: blob.type });
+  
+        // Uuploading file
+        uploadImage(imageFile).then(imageUrl => {
+          // logging image url
+          console.log(imageUrl);
+          // update image status
+          setProcessedImageUrl(imageUrl);
+          
+        }).catch(error => {
+          console.error('Error:', error);
+        });
+        
+      });
+  
+    setCurrentStep(currentStep + 1); // move to the next step after confirming
   };
+  
 
-  const imageFiles = ['image1.jpg', 'image2.jpeg', 'image3.jpeg'];
+  const [processedImageUrl, setProcessedImageUrl] = useState('');
+  const imageFiles = ['image1.jpeg', 'image2.jpg', 'image3.jpg'];
 
   const renderArtistQuestion = () => {
     return (
