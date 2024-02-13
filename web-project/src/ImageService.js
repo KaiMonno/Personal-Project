@@ -8,7 +8,7 @@ const uploadImage = (imageFile) => {
     method: 'POST',
     body: formData
   }).then(response => {
-    console.log('Response received from server:', response.status);  // Debugging to see if response received
+    console.log('Response received from server:', response.status);  // debugging to see if response received
 
     if (response.ok) {
       return response.blob();
@@ -16,7 +16,7 @@ const uploadImage = (imageFile) => {
     
     throw new Error('Network response was not ok.');
   }).then(blob => {
-    console.log('Blob received from server');  // Debugging to see blob received
+    console.log('Blob received from server');  // debugging to see blob received
 
     // converting blob into url
     return URL.createObjectURL(blob);

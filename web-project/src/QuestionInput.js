@@ -7,6 +7,8 @@ function QuestionInput() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [processedImageUrl, setProcessedImageUrl] = useState('');
+  const imageFiles = ['image1.jpeg', 'image2.jpg', 'image3.jpg'];
 
   const handleChange = (event) => {
     setInputValue(event.target.value);
@@ -51,8 +53,7 @@ function QuestionInput() {
   };
   
 
-  const [processedImageUrl, setProcessedImageUrl] = useState('');
-  const imageFiles = ['image1.jpeg', 'image2.jpg', 'image3.jpg'];
+
 
   const renderArtistQuestion = () => {
     return (
@@ -194,8 +195,17 @@ function QuestionInput() {
   return (
     <div>
       {renderStepContent()}
+      
+      {/* Display the processed image */}
+      {processedImageUrl && (
+        <div>
+          <p>Processed Image:</p>
+          <img src={processedImageUrl} alt="Processed" />
+        </div>
+      )}
     </div>
   );
+  
 }
 
 export default QuestionInput;
