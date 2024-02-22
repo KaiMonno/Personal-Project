@@ -1,8 +1,8 @@
-const uploadImage = (imageFile) => {
-  console.log('uploadImage called with file:', imageFile.name);
-
+const uploadImages = (imageFiles) => { // Assuming imageFiles is an object with keys 'image1', 'image2', 'image3'
   const formData = new FormData();
-  formData.append('image', imageFile);
+  Object.keys(imageFiles).forEach(key => {
+    formData.append(key, imageFiles[key]);
+  });
 
   return fetch('http://localhost:5000/process-image', {
     method: 'POST',
@@ -25,4 +25,4 @@ const uploadImage = (imageFile) => {
   });
 };
 
-export default uploadImage;
+export default uploadImages;

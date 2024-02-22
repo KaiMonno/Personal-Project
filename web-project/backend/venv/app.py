@@ -15,6 +15,8 @@ def index():
 @app.route('/process-image', methods=['POST'])
 def process_image():
    print("Received a request to process an image...")
+   print("Files received:", request.files)
+   print("Received a request to process an image...")
    if not all(key in request.files for key in ['image1', 'image2', 'image3']):
        print("Not all images were provided.")  # print for debugging
        return jsonify(error="Not all images were provided."), 400
