@@ -1,80 +1,82 @@
 import React, { useState } from 'react';
-import uploadImages from './ImageService';
+import uploadImage from './ImageService';
 
 function QuestionInput() {
-   const [inputValue, setInputValue] = useState('');
-   const [showImages, setShowImages] = useState(false);
-   const [selectedImages, setSelectedImages] = useState({}); 
-   const [isConfirmed, setIsConfirmed] = useState(false);
-   const [currentStep, setCurrentStep] = useState(1);
-   const [processedImageUrl, setProcessedImageUrl] = useState(''); 
-   const imageFiles = ['image1.jpeg', 'image2.jpg', 'image3.jpg'];
- 
-   const handleChange = (event) => {
-     setInputValue(event.target.value);
-   };
- 
-   const handleKeyPress = (event) => {
-     if (event.key === 'Enter') {
-       setShowImages(true);
-       event.preventDefault();
-     }
-   };
- 
-   const handleImageClick = (image, step) => {
-     setSelectedImages(prev => ({ ...prev, [step]: image }));
-   };
+  const [inputValue, setInputValue] = useState('');
+  const [showImages, setShowImages] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [processedArtistImageUrl, setProcessedArtistImageUrl] = useState('');
+  const [processedMovieImageUrl, setProcessedMovieImageUrl] = useState('');
+  const [processedShowImageUrl, setProcessedShowImageUrl] = useState('');
+  const imageFiles = ['image1.jpeg', 'image2.jpg', 'image3.jpg'];
 
-   const handleConfirm = () => {
-    console.log(`Confirming step ${currentStep} with image: ${selectedImages}`);
+  const handleChange = (event) => {
+    setInputValue(event.target.value);
+  };
 
+  const handleKeyPress = (event) => {
+    if (event.key === 'Enter') {
+      setShowImages(true);
+      event.preventDefault();
+    }
+  };
+
+  const handleImageClick = (image) => {
+    setSelectedImage(image);
+    setIsConfirmed(false);
+  };
+
+  const handleConfirm = () => {
+    console.log('handleConfirm called');  //little debugging print
     setIsConfirmed(true);
-    setSelectedImages(prev => ({ ...prev, [currentStep]: selectedImages }));
+    const category = currentStep === 1 ? 'artist' : currentStep === 2 ? 'movie' : 'show';
+    const userId = 'user123';  // user id replace later
   
-    if (currentStep === 3) {
-      console.log("All steps confirmed. Preparing to send images to backend...");
-      console.log("Selected images:", selectedImages);
-      // Ensure all images have been selected
-      if (Object.keys(selectedImages).length === 3) {
-        const formData = new FormData();
-        Promise.all(
-
-          Object.entries(selectedImages).map(([step, imageName]) =>
-            fetch(`${process.env.PUBLIC_URL}/images/${imageName}`)
-              .then(response => response.blob())
-              .then(blob => {
-                const imageFile = new File([blob], imageName, { type: blob.type });
-                formData.append(`image${step}`, imageFile);
-              })
-          )
-        ).then(() => {
-          console.log("All images fetched and appended to FormData");
-
-          uploadImages(formData).then(imageUrl => {
-            console.log("Processed image URL:", imageUrl);
-
-            setProcessedImageUrl(imageUrl);
-          }).catch(error => {
-            console.error('Error:', error);
-            console.error('Error uploading images:', error);
-
-          });
+    console.log(`Fetching image from: ${process.env.PUBLIC_URL}/images/${selectedImage}`);  //debugging
+  
+    fetch(`${process.env.PUBLIC_URL}/images/${selectedImage}`)
+      .then(response => {
+        console.log('Fetch response received:', response);  // debugging
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.blob();
+      })
+      .then(blob => {
+        console.log('Blob received:', blob);  // debugging
+        const imageFile = new File([blob], selectedImage, { type: blob.type });
+  
+        console.log(`Uploading image as ${category} for user ${userId}`);  // debugging
+  
+        uploadImage(imageFile, category, userId).then(imageUrl => {
+          console.log('Processed image URL:', imageUrl);  // debugging
+          if (category === 'artist') {
+            setProcessedArtistImageUrl(imageUrl);
+          } else if (category === 'movie') {
+            setProcessedMovieImageUrl(imageUrl);
+          } else if (category === 'show') {
+            setProcessedShowImageUrl(imageUrl);
+          }
+        }).catch(error => {
+          console.error('Error in uploadImage:', error);  // log errors
         });
-      } else {
-        console.error("Not all images have been selected.");
-      }
-    }
+      })
+      .catch(error => {
+        console.error('Error in fetch:', error);  // log errors
+      });
   
-    if (currentStep < 3) {
-      setCurrentStep(prevStep => prevStep + 1);
-      setIsConfirmed(false);
-    }
+    setCurrentStep(currentStep + 1);  // log changing steps
+    console.log(`Moving to step ${currentStep + 1}`);
   };
   
-  const renderArtistQuestion = () => {
+
+  const renderQuestion = () => {
+    const questionType = currentStep === 1 ? 'artist' : currentStep === 2 ? 'movie' : 'show';
     return (
       <div>
-        <p>Please enter your favorite artist:</p>
+        <p>Please enter your favorite {questionType}:</p>
         <input
           type="text"
           value={inputValue}
@@ -82,145 +84,60 @@ function QuestionInput() {
           onKeyPress={handleKeyPress}
           placeholder="Type here and press Enter..."
         />
-  
+
         {showImages && (
           <div>
             {imageFiles.map((file, index) => (
               <img
                 key={index}
                 src={`${process.env.PUBLIC_URL}/images/${file}`}
-                alt="Art"
+                alt={questionType}
                 style={{ width: '100px', margin: '10px', cursor: 'pointer' }}
-                onClick={() => handleImageClick(file, '1')} // Pass '1' as the step number for artist selection
+                onClick={() => handleImageClick(file)}
               />
             ))}
           </div>
         )}
-  
-        {selectedImages['1'] && !isConfirmed && ( // Check for selection in step 1
+
+        {selectedImage && !isConfirmed && (
           <div>
             <p>You selected:</p>
-            <img src={`${process.env.PUBLIC_URL}/images/${selectedImages['1']}`} alt="Selected" style={{ width: '100px' }} />
+            <img src={`${process.env.PUBLIC_URL}/images/${selectedImage}`} alt="Selected" style={{ width: '100px' }} />
             <div>
               <button onClick={handleConfirm}>Confirm</button>
-              <button onClick={() => { setSelectedImages(prev => ({...prev, '1': null})); setIsConfirmed(false); }}>No</button> 
+              <button onClick={() => { setSelectedImage(null); setIsConfirmed(false); }}>No</button>
             </div>
           </div>
         )}
       </div>
     );
   };
-  
-
-  const renderMovieQuestion = () => {
-    return (
-      <div>
-        <p>Please enter your favorite movie:</p>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleChange}
-          onKeyPress={handleKeyPress}
-          placeholder="Type here and press Enter..."
-        />
-  
-        {showImages && (
-          <div>
-            {imageFiles.map((file, index) => (
-              <img
-                key={index}
-                src={`${process.env.PUBLIC_URL}/images/${file}`}
-                alt="Art"
-                style={{ width: '100px', margin: '10px', cursor: 'pointer' }}
-                onClick={() => handleImageClick(file, '2')} // Pass '1' as the step number for artist selection
-              />
-            ))}
-          </div>
-        )}
-  
-        {selectedImages['2'] && !isConfirmed && ( // Check for selection in step 1
-          <div>
-            <p>You selected:</p>
-            <img src={`${process.env.PUBLIC_URL}/images/${selectedImages['2']}`} alt="Selected" style={{ width: '100px' }} />
-            <div>
-              <button onClick={handleConfirm}>Confirm</button>
-              <button onClick={() => { setSelectedImages(prev => ({...prev, '2': null})); setIsConfirmed(false); }}>No</button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-  
-
-  const renderShowQuestion = () => {
-    return (
-      <div>
-        <p>Please enter your favorite show:</p>
-        <input
-          type="text"
-          value={inputValue}
-          onChange={handleChange}
-          onKeyPress={handleKeyPress}
-          placeholder="Type here and press Enter..."
-        />
-  
-        {showImages && (
-          <div>
-            {imageFiles.map((file, index) => (
-              <img
-                key={index}
-                src={`${process.env.PUBLIC_URL}/images/${file}`}
-                alt="Art"
-                style={{ width: '100px', margin: '10px', cursor: 'pointer' }}
-                onClick={() => handleImageClick(file, '3')} // Pass '1' as the step number for artist selection
-              />
-            ))}
-          </div>
-        )}
-  
-        {selectedImages['3'] && !isConfirmed && ( // Check for selection in step 1
-          <div>
-            <p>You selected:</p>
-            <img src={`${process.env.PUBLIC_URL}/images/${selectedImages['3']}`} alt="Selected" style={{ width: '100px' }} />
-            <div>
-              <button onClick={handleConfirm}>Confirm</button>
-              <button onClick={() => { setSelectedImages(prev => ({...prev, '3': null})); setIsConfirmed(false); }}>No</button> 
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-  
-  
-  const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return renderArtistQuestion();
-      case 2:
-        return renderMovieQuestion();
-      case 3:
-        return renderShowQuestion();
-      default:
-        return <p>Thank you for your selections!</p>; // final step or confirmation message
-    }
-  };
-
 
   return (
     <div>
-      {renderStepContent()}
-      
-      {processedImageUrl && (
+      {renderQuestion()}
+
+      {/* image here */}
+      {processedArtistImageUrl && (
         <div>
-          <p>Processed Image:</p>
-          <img src={processedImageUrl} alt="Processed" />
+          <p>Processed Artist Image:</p>
+          <img src={processedArtistImageUrl} alt="Processed Artist" />
+        </div>
+      )}
+      {processedMovieImageUrl && (
+        <div>
+          <p>Processed Movie Image:</p>
+          <img src={processedMovieImageUrl} alt="Processed Movie" />
+        </div>
+      )}
+      {processedShowImageUrl && (
+        <div>
+          <p>Processed Show Image:</p>
+          <img src={processedShowImageUrl} alt="Processed Show" />
         </div>
       )}
     </div>
   );
-  
 }
 
 export default QuestionInput;

@@ -1,12 +1,10 @@
-const uploadImages = (imageFiles) => { // Assuming imageFiles is an object with keys 'image1', 'image2', 'image3'
+const uploadImage = (imageFile, category, userId = 'default_user') => {
   const formData = new FormData();
-  Object.keys(imageFiles).forEach(key => {
-    formData.append(key, imageFiles[key]);
-  });
+  formData.append('image', imageFile);
 
-  return fetch('http://localhost:5000/process-image', {
-    method: 'POST',
-    body: formData
+  return fetch(`http://localhost:5000/upload-image/${category}?user_id=${userId}`, {
+      method: 'POST',
+      body: formData
   }).then(response => {
     console.log('Response received from server:', response.status);  // debugging to see if response received
 
@@ -25,4 +23,4 @@ const uploadImages = (imageFiles) => { // Assuming imageFiles is an object with 
   });
 };
 
-export default uploadImages;
+export default uploadImage;
