@@ -11,6 +11,8 @@ function QuestionInput() {
   const [processedMovieImageUrl, setProcessedMovieImageUrl] = useState('');
   const [processedShowImageUrl, setProcessedShowImageUrl] = useState('');
   const imageFiles = ['image1.jpeg', 'image2.jpg', 'image3.jpg'];
+  const [allImagesProcessed, setAllImagesProcessed] = useState(false);  // check if all done
+
 
   const handleChange = (event) => {
     setInputValue(event.target.value);
@@ -29,6 +31,11 @@ function QuestionInput() {
   };
 
   const handleConfirm = () => {
+    if (currentStep >= 3) {
+      setAllImagesProcessed(true);  // Set completion state
+    } else {
+      setCurrentStep(currentStep + 1);  // Move to the next step
+    }
     console.log('handleConfirm called');  //little debugging print
     setIsConfirmed(true);
     const category = currentStep === 1 ? 'artist' : currentStep === 2 ? 'movie' : 'show';
@@ -115,23 +122,15 @@ function QuestionInput() {
 
   return (
     <div>
-      {renderQuestion()}
+      {!allImagesProcessed ? renderQuestion() : <p>All images processed. Thank you!</p>}
 
-      {/* image here */}
-      {processedArtistImageUrl && (
+      {/* all of the processed images */}
+      {allImagesProcessed && (
         <div>
           <p>Processed Artist Image:</p>
           <img src={processedArtistImageUrl} alt="Processed Artist" />
-        </div>
-      )}
-      {processedMovieImageUrl && (
-        <div>
           <p>Processed Movie Image:</p>
           <img src={processedMovieImageUrl} alt="Processed Movie" />
-        </div>
-      )}
-      {processedShowImageUrl && (
-        <div>
           <p>Processed Show Image:</p>
           <img src={processedShowImageUrl} alt="Processed Show" />
         </div>
