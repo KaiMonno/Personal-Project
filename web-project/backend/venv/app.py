@@ -7,34 +7,62 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Ensure the directory for storing processed images exists
+# making sure our directory exists
 storage_dir = 'processed_images'
 os.makedirs(storage_dir, exist_ok=True)
-
-@app.route('/') 
-def index(): return 'Welcome to the Flask backend!'
 
 @app.route('/upload-image/<category>', methods=['POST'])
 def upload_image(category):
     user_id = request.args.get('user_id', 'default_user')
-
-    if 'image' not in request.files:
-        return jsonify(error="No image provided."), 400
-
     image_file = request.files['image']
+
     if image_file:
-        # Process the image as needed, for example, convert to grayscale
-        image = Image.open(image_file.stream)
-        processed_image = image.convert('L')
+        # saving the image onto our system
+        filename = f"{user_id}_{category}.png"
+        filepath = os.path.join(storage_dir, filename)
+        image_file.save(filepath)
 
-        # Construct a file path to save the processed image
-        save_path = os.path.join(storage_dir, f'{user_id}_{category}.png')
-        processed_image.save(save_path)
+        # checking if all of the images have been uploaded
+        if all_images_uploaded(user_id):
+            combined_image = combine_images(user_id)
+            combined_image_path = os.path.join(storage_dir, f"{user_id}_combined.png")
+            combined_image.save(combined_image_path)
 
-        # To return the processed image, open the saved file and send it as a response
-        return send_file(save_path, mimetype='image/png')
+            # returning image
+            return send_file(combined_image_path, mimetype='image/png')
 
     return jsonify(error="Invalid image."), 400
+
+def all_images_uploaded(user_id):
+    # check if we have all 3 images
+    required_categories = ['artist', 'movie', 'show']
+    for category in required_categories:
+        filepath = os.path.join(storage_dir, f"{user_id}_{category}.png")
+        if not os.path.exists(filepath):
+            return False
+    return True
+
+def combine_images(user_id):
+    # combined image for this session
+    images = []
+    for category in ['artist', 'movie', 'show']:
+        filepath = os.path.join(storage_dir, f"{user_id}_{category}.png")
+        images.append(Image.open(filepath))
+
+    # assuming they are all same size just for simplicity
+    total_width = sum(image.width for image in images)
+    max_height = max(image.height for image in images)
+    combined_image = Image.new('RGB', (total_width, max_height))
+
+    x_offset = 0
+    for image in images:
+        combined_image.paste(image, (x_offset, 0))
+        x_offset += image.width
+
+    return combined_image
+
+@app.route('/') 
+def index(): return 'Welcome to the Flask backend!'
 
 if __name__ == '__main__':
     app.run(debug=True)
