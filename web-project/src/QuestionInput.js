@@ -127,12 +127,12 @@ function QuestionInput() {
       {/* all of the processed images */}
       {allImagesProcessed && (
         <div>
-          <p>Processed Artist Image:</p>
+          <p>Final Processed Image:</p>
           <img src={processedArtistImageUrl} alt="Processed Artist" />
-          <p>Processed Movie Image:</p>
+          {/* <p>Processed Movie Image:</p>
           <img src={processedMovieImageUrl} alt="Processed Movie" />
           <p>Processed Show Image:</p>
-          <img src={processedShowImageUrl} alt="Processed Show" />
+          <img src={processedShowImageUrl} alt="Processed Show" /> */}
         </div>
       )}
     </div>
